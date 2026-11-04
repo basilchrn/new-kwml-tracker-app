@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>KWML Marine Ops Tracker</title>
+  
+  <!-- Apple & PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="KWML Tracker">
+  <meta name="theme-color" content="#090E17">
+  <link rel="manifest" href="manifest.json">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <header class="top-nav">
+    <div class="brand">
+      <span class="brand-logo">⚓</span>
+      <div class="brand-text">
+        <h1>KWML Tracker</h1>
+        <p>Terminal Controller • WM-10246</p>
+      </div>
+    </div>
+    <button id="alertBellBtn" class="bell-btn" aria-label="Operational Alerts">
+      <span class="bell-icon">🔔</span>
+      <span id="alertCountBadge" class="badge">0</span>
+    </button>
+  </header>
+
+  <!-- Slide-Up Alert Drawer -->
+  <div id="drawerOverlay" class="drawer-overlay"></div>
+  <aside id="alertDrawer" class="alert-drawer">
+    <div class="drawer-header">
+      <h3>Operational Alerts</h3>
+      <button id="closeDrawerBtn" class="close-btn">&times;</button>
+    </div>
+    <div id="alertList" class="alert-list">
+      <!-- Dynamic Operational Alerts -->
+    </div>
+  </aside>
+
+  <!-- Main Viewports (5 Tabs) -->
+  <main class="content-container">
+    <!-- Tab 1: Summary -->
+    <section id="tab-summary" class="tab-view active">
+      <div id="heroShiftCard" class="card hero-card">
+        <div class="hero-top">
+          <span class="badge-tag">TODAY'S DUTY</span>
+          <span id="heroDate" class="hero-date">Loading...</span>
+        </div>
+        <div class="hero-main">
+          <div class="shift-indicator">
+            <h2 id="heroShiftCode">--</h2>
+            <p id="heroTerminal">Checking duty...</p>
+          </div>
+          <div id="heroActionContainer"></div>
+        </div>
+        <div class="hero-footer">
+          <span id="heroHours">Shift Timing: --:-- to --:--</span>
+          <span id="heroStatus" class="status-pill">Scheduled</span>
+        </div>
+      </div>
+
+      <div class="section-title">KPI Statistics</div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpiWorked">0</div>
+          <div class="kpi-label">Days Worked</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpiOffs">0</div>
+          <div class="kpi-label">Total Offs</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpiCoffs">0</div>
+          <div class="kpi-label">C-Offs Availed</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpiEL">0</div>
+          <div class="kpi-label">Emergency Leaves</div>
+        </div>
+      </div>
+
+      <div class="section-title">Leave Balances</div>
+      <div class="leave-grid">
+        <div class="leave-card">
+          <div class="leave-head">Privilege (PL)</div>
+          <div class="leave-val" id="balPL">0</div>
+          <div class="leave-sub" id="subPL">Earned: 0 | Used: 0</div>
+        </div>
+        <div class="leave-card">
+          <div class="leave-head">Casual (CL)</div>
+          <div class="leave-val" id="balCL">0</div>
+          <div class="leave-sub" id="subCL">Active: 0 | Used: 0</div>
+        </div>
+        <div class="leave-card">
+          <div class="leave-head">C-Off Balance</div>
+          <div class="leave-val" id="balCOFF">0</div>
+          <div class="leave-sub">Non-expired</div>
+        </div>
+        <div class="leave-card">
+          <div class="leave-head">Restricted (RH)</div>
+          <div class="leave-val" id="balRH">0</div>
+          <div class="leave-sub">Quota: 2/year</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 2: C-Off Expiry Hub -->
+    <section id="tab-coff" class="tab-view">
+      <div class="section-title">Compensatory Off Expiry Ledger</div>
+      <div id="coffCardList" class="coff-list">
+        <!-- Rendered via tracker-sync.js -->
+      </div>
+
+      <div class="section-title" style="margin-top: 24px;">Gazetted Holiday Register</div>
+      <div id="holidayList" class="holiday-list">
+        <!-- Rendered via tracker-sync.js -->
+      </div>
+    </section>
+
+    <!-- Tab 3: Duty Roster Calendar -->
+    <section id="tab-roster" class="tab-view">
+      <div class="calendar-header-ctrl">
+        <button id="prevMonthBtn" class="month-btn">&larr;</button>
+        <h2 id="calendarMonthTitle" class="month-title">Month Year</h2>
+        <button id="nextMonthBtn" class="month-btn">&rarr;</button>
+      </div>
+
+      <div class="calendar-grid-weekdays">
+        <div>S</div><div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div>
+      </div>
+      <div id="calendarDaysGrid" class="calendar-grid-days">
+        <!-- Cells generated via tracker-sync.js -->
+      </div>
+
+      <div id="inspectionCard" class="card inspection-card">
+        <h3>Inspection: <span id="inspectDate">Select a date</span></h3>
+        <div id="inspectDetails" class="inspect-body">
+          <p class="placeholder-text">Tap on any active shift date on the calendar above to view duty parameters.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tab 4: Payslips & FY Financial Analytics -->
+    <section id="tab-payslips" class="tab-view">
+      <div class="chart-container card">
+        <div class="chart-header">
+          <div>
+            <h3 id="chartTitle">Financial Year Overview</h3>
+            <span id="chartSubtitle" class="chart-sub">Gross Earning Profile</span>
+          </div>
+          <button id="resetFYBtn" class="reset-btn hidden">Reset to FY</button>
+        </div>
+
+        <div class="donut-wrapper">
+          <svg viewBox="0 0 100 100" class="donut-svg" id="donutSvg">
+            <!-- Dynamic SVG Donut Paths -->
+          </svg>
+          <div class="donut-center">
+            <span class="donut-center-label">Gross Pay</span>
+            <span id="donutGrossVal" class="donut-center-val">₹0</span>
+          </div>
+        </div>
+
+        <div class="legend-grid">
+          <div class="legend-item"><span class="legend-dot dot-basic"></span>Basic: <b id="legBasic">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-hra"></span>HRA: <b id="legHRA">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-vda"></span>VDA: <b id="legVDA">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-allowance"></span>Uniform/Allow: <b id="legAllow">₹0</b></div>
+        </div>
+      </div>
+
+      <div class="section-title">Monthly Pay Ledger</div>
+      <div id="payslipCardsContainer" class="payslip-list">
+        <!-- Rendered via tracker-sync.js -->
+      </div>
+    </section>
+
+    <!-- Tab 5: Profile & Entitlements -->
+    <section id="tab-profile" class="tab-view">
+      <div class="card profile-card">
+        <div class="profile-header">
+          <div class="avatar-circle">BC</div>
+          <div>
+            <h2 id="profName">Basil Cherian</h2>
+            <p id="profDesig">Terminal Controller</p>
+          </div>
+        </div>
+        <div class="profile-meta-grid">
+          <div><span>Employee ID</span><strong id="profEmpId">WM-10246</strong></div>
+          <div><span>Department</span><strong id="profDept">Marine Operations</strong></div>
+          <div><span>Date of Joining</span><strong id="profDoj">15-07-2026</strong></div>
+          <div><span>Salary Scale</span><strong id="profGrade">S1 (10,750 - 29,000)</strong></div>
+        </div>
+      </div>
+
+      <div class="card rules-card">
+        <h3>Entitlement & Leave Policy</h3>
+        <ul class="policy-list">
+          <li><b>Privilege Leave (PL):</b> Accrues at 1 day per 20 service qualifying days. Loss of pay/EL days do not count toward service qualification.</li>
+          <li><b>Casual Leave (CL):</b> 1 day per active working month (up to 12 days per working year).</li>
+          <li><b>Restricted Holiday (RH):</b> Fixed allotment of 2 days per calendar year.</li>
+          <li><b>Compensatory Off (C-Off):</b> +1 earned per gazetted holiday worked. Valid for 90 days from duty date (extendable to 120 days upon registered HR approval).</li>
+        </ul>
+      </div>
+
+      <div class="card contacts-card">
+        <h3>Emergency & Operations Control</h3>
+        <p><b>OCC Direct Line:</b> +91 484 290 5500</p>
+        <p><b>Marine Ops Supervisor:</b> +91 484 290 5512</p>
+        <p><b>HR Desk:</b> hr@watermetro.co.in</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation Bar (Cupertino Glassmorphism) -->
+  <nav class="bottom-tab-bar">
+    <button class="tab-btn active" data-tab="tab-summary">
+      <span class="tab-icon">⚡</span>
+      <span class="tab-label">Summary</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-coff">
+      <span class="tab-icon">⏳</span>
+      <span class="tab-label">C-Off</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-roster">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">Roster</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-payslips">
+      <span class="tab-icon">💳</span>
+      <span class="tab-label">Salary</span>
+    </button>
+    <button class="tab-btn" data-tab="tab-profile">
+      <span class="tab-icon">👤</span>
+      <span class="tab-label">Profile</span>
+    </button>
+  </nav>
+
+  <script src="tracker-sync.js"></script>
+</body>
+</html>

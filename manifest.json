@@ -1,0 +1,22 @@
+{
+  "name": "KWML Marine Shift & Salary Tracker",
+  "short_name": "KWML Tracker",
+  "description": "Marine Operations Terminal Controller Roster, C-Off & Salary Analytics",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#090E17",
+  "theme_color": "#090E17",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%23090E17'/%3E%3Cpath d='M256 96c-88.37 0-160 71.63-160 160s71.63 160 160 160 160-71.63 160-160S344.37 96 256 96zm0 48c61.86 0 112 50.14 112 112 0 25.1-8.3 48.3-22.3 67l-156.7-156.7C207.7 152.3 230.9 144 256 144zm-89.7 45l156.7 156.7C304.3 359.7 281.1 368 256 368c-61.86 0-112-50.14-112-112 0-25.1 8.3-48.3 22.3-67z' fill='%230A84FF'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%23090E17'/%3E%3Cpath d='M256 96c-88.37 0-160 71.63-160 160s71.63 160 160 160 160-71.63 160-160S344.37 96 256 96zm0 48c61.86 0 112 50.14 112 112 0 25.1-8.3 48.3-22.3 67l-156.7-156.7C207.7 152.3 230.9 144 256 144zm-89.7 45l156.7 156.7C304.3 359.7 281.1 368 256 368c-61.86 0-112-50.14-112-112 0-25.1 8.3-48.3 22.3-67z' fill='%230A84FF'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}
