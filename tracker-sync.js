@@ -1,18 +1,18 @@
 /**
- * KWML Marine Ops Tracker - Client Architecture & Sync
- * Pure Vanilla JS, zero dependencies.
+ * KWML Marine Ops Tracker - Client Engine (100% Dynamic / Zero Hardcoding)
  */
 
-// Replace this URL with your deployed Google Apps Script Web App exec URL
-const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbzw0hKiPqW0AoymO1bI4P-fXILLxLc1dgnIapNcP2Vcq8f6M5bDoXSoEcpMjr6BEX5VNw/exec';
+// Paste your deployed Google Apps Script Web App Exec URL here
+const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbz_YOUR_DEPLOYED_WEBAPP_ID/exec';
 
-// Terminal Location Dictionary for direct Google Maps Navigation
+const CACHE_KEY = 'KWML_CLIENT_STORE_V1';
+
 const TERMINAL_LOCATIONS = {
   'HCT': { name: 'High Court', query: 'High Court Water Metro Station Kochi' },
   'VYP': { name: 'Vypin', query: 'Vypin Water Metro Station Kochi' },
   'FOK': { name: 'Fort Kochi', query: 'Fort Kochi Water Metro Terminal' },
-  'WIL': { name: 'W. Island', query: 'Willingdon Island Water Metro Terminal' },
-  'SCT': { name: 'S. Chittoor', query: 'South Chittoor Water Metro Terminal' },
+  'WIL': { name: 'Willingdon Island', query: 'Willingdon Island Water Metro Terminal' },
+  'SCT': { name: 'South Chittoor', query: 'South Chittoor Water Metro Terminal' },
   'CHR': { name: 'Cheranalloor', query: 'Cheranalloor Water Metro Terminal' },
   'KAK': { name: 'Kakkanad', query: 'Kakkanad Water Metro Station' },
   'MAT': { name: 'Mattancherry', query: 'Mattancherry Water Metro Terminal' },
@@ -20,71 +20,20 @@ const TERMINAL_LOCATIONS = {
   'OCC': { name: 'Operations Control Centre', query: 'Kochi Water Metro OCC Vyttila' }
 };
 
-// Fallback dataset for immediate offline rendering and testing
-const FALLBACK_DATA = {
-  employee: {
-    name: "Basil Cherian",
-    empId: "WM-10246",
-    designation: "Terminal Controller",
-    department: "Marine Operations",
-    doj: "15-07-2026",
-    grade: "S1 (10,750 - 29,000)"
-  },
-  statistics: {
-    daysWorked: 94,
-    totalOffsAvailed: 18,
-    coffsAvailed: 3,
-    emergencyLeaves: 1
-  },
-  leaveBalances: {
-    pl: { earned: 5, availed: 1, balance: 4 },
-    cl: { earned: 4, availed: 1, balance: 3 },
-    rh: { total: 2, availed: 1, balance: 1 },
-    coff: { balance: 2 }
-  },
-  coffs: [
-    { id: "COFF-01", holiday: "Independence Day", dutyDate: "2026-08-15", shift: "A", expiryDate: "2026-11-13", daysRemaining: 9, status: "Available", hrApprovalRef: "" },
-    { id: "COFF-02", holiday: "First Onam", dutyDate: "2026-08-27", shift: "B", expiryDate: "2026-11-25", daysRemaining: 21, status: "Available", hrApprovalRef: "" },
-    { id: "COFF-03", holiday: "Thiruvonam", dutyDate: "2026-08-28", shift: "G", expiryDate: "2026-12-26", daysRemaining: 52, status: "Extended", hrApprovalRef: "HR/EXT/2026/09" },
-    { id: "COFF-04", holiday: "Gandhi Jayanthi", dutyDate: "2026-10-02", shift: "A", expiryDate: "2026-12-31", daysRemaining: 57, status: "Available", hrApprovalRef: "" }
-  ],
-  holidays: [
-    { name: "Independence Day", date: "2026-08-15", day: "Saturday", status: "Worked (+1 C-Off)" },
-    { name: "First Onam", date: "2026-08-27", day: "Thursday", status: "Worked (+1 C-Off)" },
-    { name: "Thiruvonam", date: "2026-08-28", day: "Friday", status: "Worked (+1 C-Off)" },
-    { name: "Gandhi Jayanthi", date: "2026-10-02", day: "Friday", status: "Worked (+1 C-Off)" },
-    { name: "Deepavali", date: "2026-11-08", day: "Sunday", status: "Scheduled" }
-  ],
-  shifts: [
-    { date: "2026-11-03", day: "Tuesday", shiftCode: "B", terminal: "HCT", startTime: "13:00", endTime: "21:00", summary: "Duty at High Court", status: "Completed" },
-    { date: "2026-11-04", day: "Wednesday", shiftCode: "A", terminal: "VYP", startTime: "07:00", endTime: "15:00", summary: "Morning shift Vypin", status: "Upcoming / Scheduled" },
-    { date: "2026-11-05", day: "Thursday", shiftCode: "A", terminal: "VYP", startTime: "07:00", endTime: "15:00", summary: "Morning shift Vypin", status: "Upcoming / Scheduled" },
-    { date: "2026-11-06", day: "Friday", shiftCode: "WO", terminal: "-", startTime: "-", endTime: "-", summary: "Weekly Off", status: "Completed" },
-    { date: "2026-11-07", day: "Saturday", shiftCode: "G", terminal: "OCC", startTime: "09:00", endTime: "17:00", summary: "OCC Operations", status: "Upcoming / Scheduled" }
-  ],
-  payslips: [
-    { month: "August 2026", payDays: 31, basic: 10750, hra: 2150, vda: 1800, uniformAllowance: 1000, lateAttendanceRefund: 0, grossPay: 15700, epf: 1290, lateAttendanceDeduction: 0, professionalTax: 200, totalDeductions: 1490, netPay: 14210, processedDate: "2026-09-02" },
-    { month: "September 2026", payDays: 30, basic: 10750, hra: 2150, vda: 1800, uniformAllowance: 1000, lateAttendanceRefund: 0, grossPay: 15700, epf: 1290, lateAttendanceDeduction: 0, professionalTax: 200, totalDeductions: 1490, netPay: 14210, processedDate: "2026-10-02" },
-    { month: "October 2026", payDays: 31, basic: 10750, hra: 2150, vda: 1800, uniformAllowance: 1000, lateAttendanceRefund: 0, grossPay: 15700, epf: 1290, lateAttendanceDeduction: 0, professionalTax: 200, totalDeductions: 1490, netPay: 14210, processedDate: "2026-11-02" }
-  ]
-};
-
 let appState = {
-  data: FALLBACK_DATA,
-  currentCalendarDate: new Date(2026, 10, 1), // November 2026
+  data: null,
+  currentCalendarDate: new Date(),
   activePayslipMonth: null
 };
 
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initAlertDrawer();
-  fetchRemoteData();
-  renderAllViews();
+  hydrateFromCacheOrRemote();
 });
 
 function initNavigation() {
-  const buttons = document.querySelectorAll('.tab-btn');
-  buttons.forEach(btn => {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const tabId = btn.getAttribute('data-tab');
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -130,21 +79,48 @@ function initAlertDrawer() {
   overlay.addEventListener('click', () => toggle(false));
 }
 
+async function hydrateFromCacheOrRemote() {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      appState.data = JSON.parse(cached);
+      renderAllViews();
+    } catch (e) {
+      localStorage.removeItem(CACHE_KEY);
+    }
+  }
+
+  await fetchRemoteData();
+}
+
 async function fetchRemoteData() {
-  if (SCRIPT_API_URL.includes('YOUR_DEPLOYED_WEBAPP_ID')) return;
+  const statusBanner = document.getElementById('syncStatusBanner');
+  if (statusBanner) statusBanner.textContent = 'Syncing ledger with Google Sheets...';
+
+  if (!SCRIPT_API_URL || SCRIPT_API_URL.includes('YOUR_DEPLOYED_WEBAPP_ID')) {
+    if (statusBanner) statusBanner.textContent = 'Waiting for Apps Script URL in tracker-sync.js';
+    return;
+  }
+
   try {
-    const res = await fetch(SCRIPT_API_URL);
+    const res = await fetch(SCRIPT_API_URL, { cache: 'no-store' });
     const json = await res.json();
     if (json.status === 'success' && json.data) {
       appState.data = json.data;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(json.data));
+      if (statusBanner) statusBanner.textContent = 'Ledger up to date';
       renderAllViews();
+    } else {
+      throw new Error(json.message || 'Malformed sheet response');
     }
   } catch (err) {
-    console.warn('Live sync fallback to local cache:', err);
+    console.error('Remote fetch error:', err);
+    if (statusBanner) statusBanner.textContent = 'Offline — viewing cached ledger';
   }
 }
 
 function renderAllViews() {
+  if (!appState.data) return;
   renderTab1Summary();
   renderTab2COff();
   renderCalendar();
@@ -157,77 +133,82 @@ function renderAllViews() {
  * Tab 1: Today's Duty Hero, Metrics & Balances
  */
 function renderTab1Summary() {
-  const todayStr = '2026-11-04'; // Synced current operations date
-  const shiftList = appState.data.shifts || [];
-  const todayShift = shiftList.find(s => s.date === todayStr);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const todayStr = `${year}-${month}-${day}`;
 
-  const heroDate = document.getElementById('heroDate');
+  const dateOptions = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
+  document.getElementById('heroDate').textContent = now.toLocaleDateString('en-GB', dateOptions);
+
+  const shifts = appState.data.shifts || [];
+  const todayShift = shifts.find(s => s.date === todayStr);
+
   const heroShiftCode = document.getElementById('heroShiftCode');
   const heroTerminal = document.getElementById('heroTerminal');
-  const heroAction = document.getElementById('heroActionContainer');
   const heroHours = document.getElementById('heroHours');
   const heroStatus = document.getElementById('heroStatus');
-
-  heroDate.textContent = 'Wed, 04 Nov 2026';
+  const heroAction = document.getElementById('heroActionContainer');
+  heroAction.innerHTML = '';
 
   if (todayShift) {
     heroShiftCode.textContent = `Shift ${todayShift.shiftCode}`;
     heroTerminal.textContent = `${todayShift.terminal} (${getTerminalFullName(todayShift.terminal)})`;
     heroHours.textContent = `Shift Timing: ${todayShift.startTime} to ${todayShift.endTime}`;
-    heroStatus.textContent = todayShift.status;
+    heroStatus.textContent = todayShift.status || 'Scheduled';
 
-    // Direct Navigation Pill Button (Suppressed on completed duty)
-    heroAction.innerHTML = '';
-    const isCompleted = todayShift.status.toLowerCase().includes('completed');
+    const isCompleted = String(todayShift.status || '').toLowerCase().includes('completed');
     const isWorkingShift = ['A', 'B', 'G'].includes(todayShift.shiftCode);
 
     if (isWorkingShift && !isCompleted) {
       const termInfo = TERMINAL_LOCATIONS[todayShift.terminal];
       const query = termInfo ? encodeURIComponent(termInfo.query) : encodeURIComponent(`${todayShift.terminal} Water Metro`);
-      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
-      
       const navBtn = document.createElement('a');
       navBtn.className = 'nav-pill';
-      navBtn.href = mapsUrl;
+      navBtn.href = `https://www.google.com/maps/search/?api=1&query=${query}`;
       navBtn.target = '_blank';
       navBtn.rel = 'noopener noreferrer';
-      navBtn.innerHTML = `<span>🧭 Navigate</span>`;
+      navBtn.innerHTML = '<span>🧭 Navigate</span>';
       heroAction.appendChild(navBtn);
     }
   } else {
     heroShiftCode.textContent = 'REST / WO';
-    heroTerminal.textContent = 'No active duty rostered';
+    heroTerminal.textContent = 'No duty rostered for today';
     heroHours.textContent = 'Shift Timing: --:--';
     heroStatus.textContent = 'Off Duty';
-    heroAction.innerHTML = '';
   }
 
-  // KPIs
+  // KPIs strictly from sheet stats
   const stats = appState.data.statistics || {};
-  document.getElementById('kpiWorked').textContent = stats.daysWorked || 0;
-  document.getElementById('kpiOffs').textContent = stats.totalOffsAvailed || 0;
-  document.getElementById('kpiCoffs').textContent = stats.coffsAvailed || 0;
-  document.getElementById('kpiEL').textContent = stats.emergencyLeaves || 0;
+  document.getElementById('kpiWorked').textContent = stats.daysWorked ?? 0;
+  document.getElementById('kpiOffs').textContent = stats.totalOffsAvailed ?? 0;
+  document.getElementById('kpiCoffs').textContent = stats.coffsAvailed ?? 0;
+  document.getElementById('kpiEL').textContent = stats.emergencyLeaves ?? 0;
 
-  // Balances
+  // Leave balances strictly from sheet leave data
   const lb = appState.data.leaveBalances || {};
   document.getElementById('balPL').textContent = lb.pl ? lb.pl.balance : 0;
-  document.getElementById('subPL').textContent = lb.pl ? `Earned: ${lb.pl.earned} | Used: ${lb.pl.availed}` : '';
+  document.getElementById('subPL').textContent = lb.pl ? `Earned: ${lb.pl.earned} | Availed: ${lb.pl.availed}` : '';
 
   document.getElementById('balCL').textContent = lb.cl ? lb.cl.balance : 0;
-  document.getElementById('subCL').textContent = lb.cl ? `Active: ${lb.cl.earned} | Used: ${lb.cl.availed}` : '';
+  document.getElementById('subCL').textContent = lb.cl ? `Active: ${lb.cl.earned} | Availed: ${lb.cl.availed}` : '';
 
   document.getElementById('balCOFF').textContent = lb.coff ? lb.coff.balance : 0;
   document.getElementById('balRH').textContent = lb.rh ? lb.rh.balance : 0;
 }
 
 /**
- * Tab 2: C-Off Expiry Hub
+ * Tab 2: C-Off Expiry Ledger & Gazetted Holidays
  */
 function renderTab2COff() {
   const container = document.getElementById('coffCardList');
   container.innerHTML = '';
   const coffs = appState.data.coffs || [];
+
+  if (coffs.length === 0) {
+    container.innerHTML = '<p class="placeholder-text">No Compensatory Offs recorded in sheet.</p>';
+  }
 
   coffs.forEach(c => {
     const card = document.createElement('div');
@@ -236,10 +217,10 @@ function renderTab2COff() {
     let badgeClass = 'safe';
     let badgeLabel = `${c.daysRemaining}d Left`;
 
-    if (c.status.toLowerCase() === 'availed') {
+    if (String(c.status).toLowerCase() === 'availed') {
       badgeClass = 'availed';
       badgeLabel = 'Availed';
-    } else if (c.status.toLowerCase().includes('extended')) {
+    } else if (String(c.status).toLowerCase().includes('extended')) {
       badgeClass = 'extended';
       badgeLabel = `+30d HR Extended (${c.daysRemaining}d)`;
     } else if (c.daysRemaining <= 15) {
@@ -252,24 +233,28 @@ function renderTab2COff() {
 
     card.innerHTML = `
       <div class="coff-info">
-        <h4>${c.holiday}</h4>
-        <p>Worked: ${c.dutyDate} (Shift ${c.shift}) • Expires: ${c.expiryDate}</p>
+        <h4>${c.holiday || 'Gazetted Duty C-Off'}</h4>
+        <p>Duty: ${c.dutyDate} (Shift ${c.shift}) • Expires: ${c.expiryDate}</p>
       </div>
       <div class="badge-status ${badgeClass}">${badgeLabel}</div>
     `;
     container.appendChild(card);
   });
 
-  // Gazetted Register
   const holList = document.getElementById('holidayList');
   holList.innerHTML = '';
   const holidays = appState.data.holidays || [];
+
+  if (holidays.length === 0) {
+    holList.innerHTML = '<p class="placeholder-text">No holiday data entered in sheet.</p>';
+  }
+
   holidays.forEach(h => {
     const row = document.createElement('div');
     row.className = 'holiday-item';
     row.innerHTML = `
       <span>${h.name} (${h.date})</span>
-      <b>${h.status}</b>
+      <b>${h.status || 'Gazetted'}</b>
     `;
     holList.appendChild(row);
   });
@@ -291,13 +276,11 @@ function renderCalendar() {
   const firstDayIndex = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Shift lookup map
   const shiftsMap = {};
   (appState.data.shifts || []).forEach(s => {
     shiftsMap[s.date] = s;
   });
 
-  // Empty leading cells
   for (let i = 0; i < firstDayIndex; i++) {
     const emptyCell = document.createElement('div');
     emptyCell.className = 'calendar-cell empty';
@@ -321,16 +304,12 @@ function renderCalendar() {
       badge.className = 'badge-2line';
       const code = shift.shiftCode;
 
-      // Color Hierarchy Logic
       if (code === 'A') badge.classList.add('shift-a');
       else if (code === 'B') badge.classList.add('shift-b');
       else if (code === 'G') badge.classList.add('shift-g');
       else if (code === 'EL') badge.classList.add('unpaid');
-      else if (['WO', 'REST'].includes(code)) {
-        cell.classList.add('non-duty');
-      } else {
-        badge.classList.add('leave');
-      }
+      else if (['WO', 'REST'].includes(code)) cell.classList.add('non-duty');
+      else badge.classList.add('leave');
 
       badge.innerHTML = `<div>${code}</div><div>${getTerminalAbbrev(shift.terminal)}</div>`;
       cell.appendChild(badge);
@@ -356,7 +335,7 @@ function renderInspectionCard(shift) {
 
   const termFull = getTerminalFullName(shift.terminal);
   const isWorking = ['A', 'B', 'G'].includes(shift.shiftCode);
-  const isUpcoming = !shift.status.toLowerCase().includes('completed');
+  const isUpcoming = !String(shift.status || '').toLowerCase().includes('completed');
 
   let navMarkup = '';
   if (isWorking && isUpcoming) {
@@ -369,43 +348,47 @@ function renderInspectionCard(shift) {
     <div style="font-size: 14px; line-height: 1.6;">
       <p><b>Duty:</b> Shift ${shift.shiftCode} — ${termFull}</p>
       <p><b>Hours:</b> ${shift.startTime} to ${shift.endTime}</p>
-      <p><b>Status:</b> ${shift.status}</p>
-      <p><b>Summary:</b> ${shift.summary || 'Standard Terminal Operations'}</p>
+      <p><b>Status:</b> ${shift.status || 'Active'}</p>
+      <p><b>Summary:</b> ${shift.summary || 'Operational Shift Duty'}</p>
       ${navMarkup}
     </div>
   `;
 }
 
 /**
- * Tab 4: Salary & SVG Donut Chart (Indian FY Dynamic Bound)
+ * Tab 4: Salary & Dynamic FY Analytics
  */
 function renderSalaryAnalytics() {
   const payslips = appState.data.payslips || [];
   const container = document.getElementById('payslipCardsContainer');
   container.innerHTML = '';
 
-  // Determine current financial year (April 1 to March 31)
-  const today = new Date(2026, 10, 4);
-  const currMonth = today.getMonth() + 1; // 1-12
-  const currYear = today.getFullYear();
+  const now = new Date();
+  const currMonth = now.getMonth() + 1;
+  const currYear = now.getFullYear();
   const fyStart = currMonth >= 4 ? currYear : currYear - 1;
   const fyEnd = fyStart + 1;
 
   document.getElementById('chartTitle').textContent = `Financial Year ${fyStart}-${fyEnd}`;
 
-  // Monthly cards
+  if (payslips.length === 0) {
+    container.innerHTML = '<p class="placeholder-text">No synced payslip rows in spreadsheet.</p>';
+    renderSalaryAnalyticsChart();
+    return;
+  }
+
   payslips.forEach(p => {
     const card = document.createElement('div');
     card.className = `payslip-card ${appState.activePayslipMonth === p.month ? 'active-month' : ''}`;
     card.innerHTML = `
       <div class="payslip-header-line">
         <h4>${p.month}</h4>
-        <span class="payslip-net">₹${p.netPay.toLocaleString('en-IN')}</span>
+        <span class="payslip-net">₹${(p.netPay || 0).toLocaleString('en-IN')}</span>
       </div>
       <div class="payslip-details-line">
-        <span>Gross: ₹${p.grossPay.toLocaleString('en-IN')}</span>
-        <span>Deductions: ₹${p.totalDeductions.toLocaleString('en-IN')}</span>
-        <span>Days: ${p.payDays}</span>
+        <span>Gross: ₹${(p.grossPay || 0).toLocaleString('en-IN')}</span>
+        <span>Deductions: ₹${(p.totalDeductions || 0).toLocaleString('en-IN')}</span>
+        <span>Days: ${p.payDays || 0}</span>
       </div>
     `;
 
@@ -434,24 +417,26 @@ function renderSalaryAnalyticsChart() {
   let basic = 0, hra = 0, vda = 0, allow = 0, gross = 0;
 
   if (appState.activePayslipMonth) {
-    const selected = payslips.find(p => p.month === appState.activePayslipMonth);
-    if (selected) {
-      basic = selected.basic;
-      hra = selected.hra;
-      vda = selected.vda;
-      allow = selected.uniformAllowance + selected.lateAttendanceRefund;
-      gross = selected.grossPay;
-      document.getElementById('chartSubtitle').textContent = `Salary Breakdown for ${selected.month}`;
+    const sel = payslips.find(p => p.month === appState.activePayslipMonth);
+    if (sel) {
+      basic = sel.basic || 0;
+      hra = sel.hra || 0;
+      vda = sel.vda || 0;
+      allow = (sel.uniformAllowance || 0) + (sel.lateAttendanceRefund || 0);
+      gross = sel.grossPay || (basic + hra + vda + allow);
+      document.getElementById('chartSubtitle').textContent = `Breakdown for ${sel.month}`;
     }
   } else {
     payslips.forEach(p => {
-      basic += p.basic;
-      hra += p.hra;
-      vda += p.vda;
-      allow += (p.uniformAllowance + p.lateAttendanceRefund);
-      gross += p.grossPay;
+      basic += (p.basic || 0);
+      hra += (p.hra || 0);
+      vda += (p.vda || 0);
+      allow += ((p.uniformAllowance || 0) + (p.lateAttendanceRefund || 0));
+      gross += (p.grossPay || 0);
     });
-    document.getElementById('chartSubtitle').textContent = 'FY Combined Earnings Profile';
+    document.getElementById('chartSubtitle').textContent = payslips.length > 0 
+      ? 'FY Combined Earnings Profile' 
+      : 'No payslip entries found in sheet';
   }
 
   document.getElementById('donutGrossVal').textContent = `₹${gross.toLocaleString('en-IN')}`;
@@ -471,9 +456,9 @@ function renderSalaryAnalyticsChart() {
 function drawDonutChart(segments, total) {
   const svg = document.getElementById('donutSvg');
   svg.innerHTML = '';
-  if (total === 0) return;
+  if (total <= 0) return;
 
-  const radius = 15.91549430918954; // Circumference = 100
+  const radius = 15.91549430918954;
   let accumulatedPercent = 0;
 
   segments.forEach(seg => {
@@ -496,16 +481,27 @@ function drawDonutChart(segments, total) {
 }
 
 /**
- * Tab 5: Profile Data Binding
+ * Tab 5: Profile Data
  */
 function renderTab5Profile() {
   const emp = appState.data.employee || {};
-  document.getElementById('profName').textContent = emp.name || 'Basil Cherian';
-  document.getElementById('profDesig').textContent = emp.designation || 'Terminal Controller';
-  document.getElementById('profEmpId').textContent = emp.empId || 'WM-10246';
+  document.getElementById('profName').textContent = emp.name || '--';
+  document.getElementById('profDesig').textContent = emp.designation || '--';
+  document.getElementById('profEmpId').textContent = emp.empId || '--';
   document.getElementById('profDept').textContent = emp.department || 'Marine Operations';
-  document.getElementById('profDoj').textContent = emp.doj || '15-07-2026';
-  document.getElementById('profGrade').textContent = emp.grade || 'S1 (10,750 - 29,000)';
+  document.getElementById('profDoj').textContent = emp.doj || '--';
+  document.getElementById('profGrade').textContent = emp.grade || '--';
+
+  // Compute initials for avatar badge
+  const initials = (emp.name || 'KW')
+    .split(' ')
+    .filter(Boolean)
+    .map(p => p[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase();
+  const avatar = document.querySelector('.avatar-circle');
+  if (avatar) avatar.textContent = initials;
 }
 
 /**
@@ -516,31 +512,28 @@ function evaluateOperationalAlerts() {
   const coffs = appState.data.coffs || [];
   const shifts = appState.data.shifts || [];
 
-  // 1. Urgent C-Off Expirations (<= 15 days)
   coffs.forEach(c => {
-    if (c.status !== 'Availed' && c.daysRemaining <= 15 && c.daysRemaining >= 0) {
+    if (String(c.status).toLowerCase() !== 'availed' && c.daysRemaining <= 15 && c.daysRemaining >= 0) {
       alerts.push({
         type: 'critical',
         title: `C-Off Expiring in ${c.daysRemaining} Days`,
-        desc: `${c.holiday} (Earned: ${c.dutyDate}) will lapse on ${c.expiryDate}. Avail immediately or request +30d HR Extension.`
+        desc: `${c.holiday || 'C-Off'} will lapse on ${c.expiryDate}. Avail duty or request HR Extension.`
       });
     }
   });
 
-  // 2. Fatigue & Quick Turnaround Detection (Shift B -> Shift A next day < 10 hrs)
   for (let i = 0; i < shifts.length - 1; i++) {
     const cur = shifts[i];
     const nxt = shifts[i + 1];
     if (cur.shiftCode === 'B' && nxt.shiftCode === 'A') {
       alerts.push({
         type: 'warning',
-        title: `Quick Turnaround Fatigue Warning`,
-        desc: `Shift B on ${cur.date} (ends 21:00) is followed by Shift A on ${nxt.date} (starts 07:00). Turnaround window is only 10 hours.`
+        title: 'Quick Turnaround Warning',
+        desc: `Shift B on ${cur.date} is followed by Shift A on ${nxt.date}. Turnaround is under 10 hours.`
       });
     }
   }
 
-  // 3. Duty Streaks (>6 consecutive shifts without WO)
   let streak = 0;
   shifts.forEach(s => {
     if (['A', 'B', 'G'].includes(s.shiftCode)) {
@@ -548,8 +541,8 @@ function evaluateOperationalAlerts() {
       if (streak > 6) {
         alerts.push({
           type: 'warning',
-          title: `Consecutive Shift Alert (${streak} Days)`,
-          desc: `Working ${streak} consecutive shifts without a rostered rest day (WO). Monitor fatigue.`
+          title: `Duty Streak (${streak} Days)`,
+          desc: `Working ${streak} consecutive duties without a rostered rest day (WO).`
         });
       }
     } else {
@@ -557,7 +550,6 @@ function evaluateOperationalAlerts() {
     }
   });
 
-  // Update Badge & Drawer
   const badge = document.getElementById('alertCountBadge');
   const alertList = document.getElementById('alertList');
   alertList.innerHTML = '';
@@ -565,7 +557,6 @@ function evaluateOperationalAlerts() {
   if (alerts.length > 0) {
     badge.style.display = 'block';
     badge.textContent = alerts.length;
-
     alerts.forEach(a => {
       const item = document.createElement('div');
       item.className = `alert-item ${a.type}`;
@@ -574,7 +565,7 @@ function evaluateOperationalAlerts() {
     });
   } else {
     badge.style.display = 'none';
-    alertList.innerHTML = '<p class="placeholder-text">All operational parameters normal. No fatigue or expiration warnings.</p>';
+    alertList.innerHTML = '<p class="placeholder-text">All operational parameters normal.</p>';
   }
 }
 
