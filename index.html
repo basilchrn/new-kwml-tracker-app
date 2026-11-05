@@ -111,15 +111,62 @@
       </div>
     </section>
 
-    <!-- Tab 2: C-Off Expiry Hub -->
+   <!-- Tab 2: C-Off Expiry Hub -->
     <section id="tab-coff" class="tab-view">
+      <!-- C-Off Hero Rules & Critical Alert Card -->
+      <div id="coffHeroCard" class="card coff-hero-card">
+        <div class="coff-hero-header">
+          <span class="badge-tag">POLICY & COMPLIANCE</span>
+          <span id="coffHeroStatusBadge" class="badge-status safe">0 Critical</span>
+        </div>
+        <h2>Compensatory Off Guidelines</h2>
+        
+        <!-- Policy Rules List -->
+        <div class="coff-policy-rules">
+          <div class="rule-chip">
+            <span class="rule-icon">⚖️</span>
+            <div>
+              <strong>Accrual:</strong> +1 credit earned per gazetted holiday worked.
+            </div>
+          </div>
+          <div class="rule-chip">
+            <span class="rule-icon">⏳</span>
+            <div>
+              <strong>Standard Validity:</strong> 90 calendar days from the duty date.
+            </div>
+          </div>
+          <div class="rule-chip">
+            <span class="rule-icon">📝</span>
+            <div>
+              <strong>HR Extension:</strong> Up to 120 days upon registered approval.
+            </div>
+          </div>
+          <div class="rule-chip">
+            <span class="rule-icon">⚠️</span>
+            <div>
+              <strong>Lapse Clause:</strong> Unavailed credits expire after validity with no cash encashment.
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Critical Warning Banner inside Hero Tab -->
+        <div id="coffHeroWarningContainer" class="coff-hero-warning hidden">
+          <div class="hero-warning-banner">
+            <span class="warning-flashing-icon">🚨</span>
+            <div id="coffHeroWarningText">
+              <!-- Dynamically populated if <= 15 days remaining -->
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="section-title">Compensatory Off Expiry Ledger</div>
       <div id="coffCardList" class="coff-list"></div>
 
-      <div class="section-title" style="margin-top: 24px;">KWML Holiday Register</div>
+      <div class="section-title" style="margin-top: 24px;">Gazetted Holiday Register</div>
       <div id="holidayList" class="holiday-list"></div>
     </section>
-
+    
     <!-- Tab 3: Duty Roster Calendar -->
     <section id="tab-roster" class="tab-view">
       <div class="calendar-header-ctrl">
