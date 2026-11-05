@@ -408,7 +408,7 @@ function renderInspectionCard(shift) {
 
   let navMarkup = '';
   if (isWorking && isUpcoming) {
-    const termInfo = TERMINAL_LOCATIONS[shift.terminal];
+    const termInfo = TERMINAL_LOCATIONS[getTerminalAbbrev(shift.terminal)];
     const query = termInfo ? encodeURIComponent(termInfo.query) : encodeURIComponent(`${shift.terminal} Water Metro`);
     navMarkup = `<a href="https://www.google.com/maps/search/?api=1&query=${query}" target="_blank" class="nav-pill" style="margin-top: 10px; display: inline-flex;">🧭 Navigate to Terminal</a>`;
   }
