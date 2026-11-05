@@ -12,9 +12,9 @@ const TERMINAL_LOCATIONS = {
   'VYP': { name: 'Vypin', query: 'Vypin Water Metro Station Kochi' },
   'FOK': { name: 'Fort Kochi', query: 'Fort Kochi Water Metro Terminal' },
   'WIL': { name: 'W. Island', query: 'Willingdon Island Water Metro Terminal' },
-  'SCT': { name: 'S. Chittoor', query: 'South Chittoor Water Metro Terminal' },
+  'SOC': { name: 'S. Chittoor', query: 'South Chittoor Water Metro Terminal' },
   'CHR': { name: 'Cheranalloor', query: 'Cheranalloor Water Metro Terminal' },
-  'KAK': { name: 'Kakkanad', query: 'Kakkanad Water Metro Station' },
+  'KKD': { name: 'Kakkanad', query: 'Kakkanad Water Metro Station' },
   'MAT': { name: 'Mattancherry', query: 'Mattancherry Water Metro Terminal' },
   'VYT': { name: 'Vyttila', query: 'Vyttila Water Metro Station' },
   'OCC': { name: 'Operations Control Centre', query: 'Kochi Water Metro OCC Vyttila' }
