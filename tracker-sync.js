@@ -29,8 +29,77 @@ let appState = {
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initAlertDrawer();
+  initForceSyncButton();
   hydrateFromCacheOrRemote();
 });
+
+function initForceSyncButton() {
+  const syncBtn = document.getElementById('forceSyncBtn');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', () => {
+      forceLiveSheetSync();
+    });
+  }
+}
+
+async function forceLiveSheetSync() {
+  const syncBtn = document.getElementById('forceSyncBtn');
+  const btnText = syncBtn.querySelector('.sync-btn-text');
+  const lastSyncLabel = document.getElementById('lastSyncTimestamp');
+  const statusBanner = document.getElementById('syncStatusBanner');
+
+  // Set loading state
+  syncBtn.disabled = true;
+  syncBtn.classList.add('loading');
+  if (btnText) btnText.textContent = 'Syncing...';
+  if (statusBanner) statusBanner.textContent = 'Bypassing cache & fetching live rows from Google Sheets...';
+
+  // Invalidate device storage
+  localStorage.removeItem(CACHE_KEY);
+
+  try {
+    // Append nocache=true and random timestamp to defeat Google CDN / CacheService
+    const separator = SCRIPT_API_URL.includes('?') ? '&' : '?';
+    const bypassUrl = `${SCRIPT_API_URL}${separator}nocache=true&_ts=${Date.now()}`;
+
+    const res = await fetch(bypassUrl, { cache: 'no-store' });
+    const json = await res.json();
+
+    if (json.status === 'success' && json.data) {
+      appState.data = json.data;
+      localStorage.setItem(CACHE_KEY, JSON.stringify(json.data));
+      localStorage.setItem('KWML_LAST_SYNC_TIME', new Date().toISOString());
+
+      renderAllViews();
+      updateSyncTimestampDisplay();
+
+      if (statusBanner) statusBanner.textContent = 'Google Sheet live sync complete';
+    } else {
+      throw new Error(json.message || 'Error fetching sheet data');
+    }
+  } catch (err) {
+    console.error('Forced sync failure:', err);
+    if (statusBanner) statusBanner.textContent = 'Failed to sync with Google Sheet';
+    alert('Sync error: Could not reach Google Sheets. Check Apps Script URL or permissions.');
+  } finally {
+    syncBtn.disabled = false;
+    syncBtn.classList.remove('loading');
+    if (btnText) btnText.textContent = 'Force Sync';
+  }
+}
+
+function updateSyncTimestampDisplay() {
+  const lastSyncLabel = document.getElementById('lastSyncTimestamp');
+  if (!lastSyncLabel) return;
+
+  const storedTime = localStorage.getItem('KWML_LAST_SYNC_TIME');
+  if (storedTime) {
+    const d = new Date(storedTime);
+    lastSyncLabel.textContent = `Last synced: ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  } else {
+    lastSyncLabel.textContent = 'Last synced: Just now';
+  }
+}
 
 function initNavigation() {
   document.querySelectorAll('.tab-btn').forEach(btn => {
