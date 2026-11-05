@@ -142,34 +142,63 @@
     </section>
 
     <!-- Tab 4: Payslips & FY Financial Analytics -->
+<!-- Tab 4: Payslips & Interactive Financial Year Analytics -->
     <section id="tab-payslips" class="tab-view">
+      <!-- 1) Total EPF Collected Hero Card -->
+      <div class="card epf-hero-card">
+        <div class="epf-hero-info">
+          <span class="badge-tag">RETIREMENT SAVINGS</span>
+          <h2>Total EPF Accumulated</h2>
+          <p>From Date of Joining to till date</p>
+        </div>
+        <div class="epf-hero-value" id="totalEpfAccumulated">₹0</div>
+      </div>
+
+      <!-- 2 & 3 & 4) Responsive Pie/Donut Chart Container with FY Selector -->
       <div class="chart-container card">
         <div class="chart-header">
           <div>
             <h3 id="chartTitle">Financial Year Overview</h3>
-            <span id="chartSubtitle" class="chart-sub">Gross Earning Profile</span>
+            <span id="chartSubtitle" class="chart-sub">Earnings & Deductions Profile</span>
           </div>
-          <button id="resetFYBtn" class="reset-btn hidden">Reset to FY</button>
+          <div class="chart-controls">
+            <!-- FY Dropdown Selector -->
+            <select id="fySelectDropdown" class="fy-dropdown" aria-label="Select Financial Year">
+              <!-- Dynamically populated from sheet data -->
+            </select>
+            <button id="resetFYBtn" class="reset-btn hidden" type="button">Reset Selection</button>
+          </div>
         </div>
 
+        <!-- Adaptive SVG Container -->
         <div class="donut-wrapper">
-          <svg viewBox="0 0 100 100" class="donut-svg" id="donutSvg"></svg>
+          <svg viewBox="0 0 100 100" class="donut-svg" id="donutSvg" preserveAspectRatio="xMidYMid meet">
+            <!-- SVG circular segments rendered via tracker-sync.js -->
+          </svg>
           <div class="donut-center">
-            <span class="donut-center-label">Gross Pay</span>
+            <span class="donut-center-label" id="donutCenterLabel">Gross Total</span>
             <span id="donutGrossVal" class="donut-center-val">₹0</span>
           </div>
         </div>
 
+        <!-- 4) Legend for all 8 Components (Earnings + Deductions) -->
         <div class="legend-grid">
           <div class="legend-item"><span class="legend-dot dot-basic"></span>Basic: <b id="legBasic">₹0</b></div>
           <div class="legend-item"><span class="legend-dot dot-hra"></span>HRA: <b id="legHRA">₹0</b></div>
           <div class="legend-item"><span class="legend-dot dot-vda"></span>VDA: <b id="legVDA">₹0</b></div>
-          <div class="legend-item"><span class="legend-dot dot-allowance"></span>Uniform/Allow: <b id="legAllow">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-uniform"></span>Uniform: <b id="legUniform">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-ot"></span>OT / Refund: <b id="legOT">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-epf"></span>EPF: <b id="legEPF">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-late"></span>Late Attend.: <b id="legLate">₹0</b></div>
+          <div class="legend-item"><span class="legend-dot dot-ptax"></span>Prof. Tax: <b id="legPTax">₹0</b></div>
         </div>
       </div>
 
+      <!-- 5) Monthly Salary Breakdown Cards -->
       <div class="section-title">Monthly Pay Ledger</div>
-      <div id="payslipCardsContainer" class="payslip-list"></div>
+      <div id="payslipCardsContainer" class="payslip-list">
+        <!-- Rendered via tracker-sync.js -->
+      </div>
     </section>
 
     <!-- Tab 5: Profile & Entitlements -->
