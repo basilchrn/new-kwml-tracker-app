@@ -581,6 +581,7 @@ function evaluateOperationalAlerts() {
   const coffs = appState.data.coffs || [];
   const shifts = appState.data.shifts || [];
 
+  // 1. C-Off Extension permission from HR
   coffs.forEach(c => {
     if (String(c.status).toLowerCase() !== 'availed' && c.daysRemaining <= 15 && c.daysRemaining >= 0) {
       alerts.push({
@@ -591,18 +592,33 @@ function evaluateOperationalAlerts() {
     }
   });
 
+  // 2. Fatigue & Quick Turnaround Detection (Upcoming Shifts Only)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   for (let i = 0; i < shifts.length - 1; i++) {
     const cur = shifts[i];
     const nxt = shifts[i + 1];
+
     if (cur.shiftCode === 'B' && nxt.shiftCode === 'A') {
-      alerts.push({
-        type: 'warning',
-        title: 'Quick Turnaround Warning',
-        desc: `Shift B on ${cur.date} is followed by Shift A on ${nxt.date}. Turnaround is under 10 hours.`
-      });
+      const nextShiftDate = new Date(nxt.date);
+      nextShiftDate.setHours(0, 0, 0, 0);
+
+      // Verify the following morning shift is upcoming (not marked completed & date is >= today)
+      const isNextCompleted = String(nxt.status || '').toLowerCase().includes('completed');
+      const isUpcoming = nextShiftDate >= today && !isNextCompleted;
+
+      if (isUpcoming) {
+        alerts.push({
+          type: 'warning',
+          title: 'Quick Turnaround Warning',
+          desc: `Upcoming Shift B on ${cur.date} (ends 21:00) is followed by Shift A on ${nxt.date} (starts 07:00). Turnaround window is under 10 hours.`
+        });
+      }
     }
   }
 
+  // 3. Continuos working day streak alert
   let streak = 0;
   shifts.forEach(s => {
     if (['A', 'B', 'G'].includes(s.shiftCode)) {
