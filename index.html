@@ -168,6 +168,17 @@
 
     <!-- Tab 5: Profile & Entitlements -->
     <section id="tab-profile" class="tab-view">
+      <!-- Manual Ledger Sync Control -->
+      <div class="card sync-action-card">
+        <div class="sync-action-info">
+          <h3>Google Sheets Live Sync</h3>
+          <p id="lastSyncTimestamp">Last synced: Checking cache...</p>
+        </div>
+        <button id="forceSyncBtn" class="force-sync-btn" type="button">
+          <span class="sync-icon">🔄</span>
+          <span class="sync-btn-text">Force Sync</span>
+        </button>
+      </div>
       <div class="card profile-card">
         <div class="profile-header">
           <div class="avatar-circle">--</div>
