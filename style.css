@@ -681,8 +681,8 @@ body {
 }
 
 .avatar-circle {
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: var(--system-blue);
   display: flex;
@@ -690,6 +690,22 @@ body {
   justify-content: center;
   font-size: 18px;
   font-weight: 700;
+  overflow: hidden;
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  flex-shrink: 0;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar-fallback {
+  color: #FFFFFF;
+  text-transform: uppercase;
 }
 
 .profile-meta-grid {
