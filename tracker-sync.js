@@ -23,7 +23,8 @@ const TERMINAL_LOCATIONS = {
 let appState = {
   data: null,
   currentCalendarDate: new Date(),
-  activePayslipMonth: null
+  activePayslipMonth: null,
+  selectedFY: null
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -124,11 +125,273 @@ function initNavigation() {
     renderCalendar();
   });
 
+  // Reset month-level focus
   document.getElementById('resetFYBtn').addEventListener('click', () => {
     appState.activePayslipMonth = null;
     document.querySelectorAll('.payslip-card').forEach(c => c.classList.remove('active-month'));
     document.getElementById('resetFYBtn').classList.add('hidden');
-    renderSalaryAnalytics();
+    renderSalaryAnalyticsChart();
+  });
+
+  // FY Dropdown Change
+  const fySelect = document.getElementById('fySelectDropdown');
+  if (fySelect) {
+    fySelect.addEventListener('change', (e) => {
+      appState.selectedFY = e.target.value;
+      appState.activePayslipMonth = null;
+      document.getElementById('resetFYBtn').classList.add('hidden');
+      renderSalaryAnalytics();
+    });
+  }
+}
+
+/**
+ * Parses any date/month string into a numeric Date object
+ */
+function parseDateHelper(str) {
+  if (!str) return new Date();
+  if (str instanceof Date) return str;
+  const s = String(str).trim();
+  // If format is YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const parts = s.split('-');
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  }
+  // Try standard parse (e.g. "August 2026", "2026-08")
+  const parsed = new Date(s);
+  return isNaN(parsed.getTime()) ? new Date() : parsed;
+}
+
+/**
+ * Computes Indian Financial Year (Apr 1 - Mar 31) for a given date
+ */
+function getIndianFY(dateObj) {
+  const m = dateObj.getMonth() + 1; // 1-12
+  const y = dateObj.getFullYear();
+  const start = m >= 4 ? y : y - 1;
+  return `${start}-${start + 1}`;
+}
+
+/**
+ * Tab 4: Salary & FY Analytics
+ */
+function renderSalaryAnalytics() {
+  const payslips = appState.data.payslips || [];
+
+  // 1) Total EPF Collected (From joining date to till date)
+  let cumulativeEPF = 0;
+  payslips.forEach(p => {
+    cumulativeEPF += (Number(p.epf) || 0);
+  });
+  const epfEl = document.getElementById('totalEpfAccumulated');
+  if (epfEl) {
+    epfEl.textContent = `₹${cumulativeEPF.toLocaleString('en-IN')}`;
+  }
+
+  // 2) Collect and Populate Financial Years
+  const fySet = new Set();
+  payslips.forEach(p => {
+    const d = parseDateHelper(p.processedDate || p.month);
+    fySet.add(getIndianFY(d));
+  });
+
+  // Include current FY in the set even if payslips aren't processed yet
+  const currentLiveFY = getIndianFY(new Date());
+  fySet.add(currentLiveFY);
+
+  const sortedFYs = Array.from(fySet).sort().reverse();
+  const fySelect = document.getElementById('fySelectDropdown');
+  
+  if (fySelect) {
+    // Only rebuild dropdown if choices changed
+    const currentOptions = Array.from(fySelect.options).map(o => o.value).join(',');
+    const newOptions = sortedFYs.join(',');
+    if (currentOptions !== newOptions) {
+      fySelect.innerHTML = '';
+      sortedFYs.forEach(fy => {
+        const opt = document.createElement('option');
+        opt.value = fy;
+        opt.textContent = `FY ${fy}`;
+        fySelect.appendChild(opt);
+      });
+    }
+    if (!appState.selectedFY || !fySet.has(appState.selectedFY)) {
+      appState.selectedFY = sortedFYs[0];
+    }
+    fySelect.value = appState.selectedFY;
+  }
+
+  document.getElementById('chartTitle').textContent = `Financial Year ${appState.selectedFY}`;
+
+  // Filter payslips strictly belonging to selected FY
+  const filteredPayslips = payslips.filter(p => {
+    const d = parseDateHelper(p.processedDate || p.month);
+    return getIndianFY(d) === appState.selectedFY;
+  });
+
+  // 5) Render Monthly Cards (Month & Year, Net Credited, Gross, EPF, Other Deductions)
+  const container = document.getElementById('payslipCardsContainer');
+  container.innerHTML = '';
+
+  if (filteredPayslips.length === 0) {
+    container.innerHTML = `<p class="placeholder-text">No payslip data found for FY ${appState.selectedFY}.</p>`;
+  } else {
+    filteredPayslips.forEach(p => {
+      const epfDeduction = Number(p.epf) || 0;
+      const totalDed = Number(p.totalDeductions) || 0;
+      const otherDeductions = Math.max(0, totalDed - epfDeduction);
+
+      const card = document.createElement('div');
+      card.className = `payslip-card ${appState.activePayslipMonth === p.month ? 'active-month' : ''}`;
+      card.innerHTML = `
+        <div class="payslip-header-line">
+          <h4>${p.month}</h4>
+          <span class="payslip-net">₹${(Number(p.netPay) || 0).toLocaleString('en-IN')} <small style="font-size:10px; color:var(--text-secondary);">(Credited)</small></span>
+        </div>
+        <div class="payslip-grid-2x2">
+          <div>
+            <span>Gross Salary</span>
+            <b>₹${(Number(p.grossPay) || 0).toLocaleString('en-IN')}</b>
+          </div>
+          <div>
+            <span>EPF Deduction</span>
+            <b style="color: var(--system-amber);">₹${epfDeduction.toLocaleString('en-IN')}</b>
+          </div>
+          <div>
+            <span>Other Deductions</span>
+            <b>₹${otherDeductions.toLocaleString('en-IN')}</b>
+          </div>
+          <div>
+            <span>Total Deductions</span>
+            <b>₹${totalDed.toLocaleString('en-IN')}</b>
+          </div>
+        </div>
+      `;
+
+      card.addEventListener('click', () => {
+        if (appState.activePayslipMonth === p.month) {
+          appState.activePayslipMonth = null;
+          card.classList.remove('active-month');
+          document.getElementById('resetFYBtn').classList.add('hidden');
+        } else {
+          appState.activePayslipMonth = p.month;
+          document.querySelectorAll('.payslip-card').forEach(c => c.classList.remove('active-month'));
+          card.classList.add('active-month');
+          document.getElementById('resetFYBtn').classList.remove('hidden');
+        }
+        renderSalaryAnalyticsChart();
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  renderSalaryAnalyticsChart();
+}
+
+/**
+ * 4) Render Adaptive Donut Chart with all 8 fields
+ */
+function renderSalaryAnalyticsChart() {
+  const payslips = appState.data.payslips || [];
+  const filteredPayslips = payslips.filter(p => {
+    const d = parseDateHelper(p.processedDate || p.month);
+    return getIndianFY(d) === appState.selectedFY;
+  });
+
+  let basic = 0, hra = 0, vda = 0, uniform = 0, ot = 0;
+  let epf = 0, late = 0, ptax = 0, gross = 0;
+
+  if (appState.activePayslipMonth) {
+    const sel = filteredPayslips.find(p => p.month === appState.activePayslipMonth);
+    if (sel) {
+      basic = Number(sel.basic) || 0;
+      hra = Number(sel.hra) || 0;
+      vda = Number(sel.vda) || 0;
+      uniform = Number(sel.uniformAllowance) || 0;
+      ot = Number(sel.lateAttendanceRefund) || 0;
+      epf = Number(sel.epf) || 0;
+      late = Number(sel.lateAttendanceDeduction) || 0;
+      ptax = Number(sel.professionalTax) || 0;
+      gross = Number(sel.grossPay) || (basic + hra + vda + uniform + ot);
+      document.getElementById('chartSubtitle').textContent = `Breakdown for ${sel.month}`;
+    }
+  } else {
+    filteredPayslips.forEach(p => {
+      basic += (Number(p.basic) || 0);
+      hra += (Number(p.hra) || 0);
+      vda += (Number(p.vda) || 0);
+      uniform += (Number(p.uniformAllowance) || 0);
+      ot += (Number(p.lateAttendanceRefund) || 0);
+      epf += (Number(p.epf) || 0);
+      late += (Number(p.lateAttendanceDeduction) || 0);
+      ptax += (Number(p.professionalTax) || 0);
+      gross += (Number(p.grossPay) || 0);
+    });
+    document.getElementById('chartSubtitle').textContent = filteredPayslips.length > 0 
+      ? `FY ${appState.selectedFY} Consolidated Breakdown`
+      : 'No payslip entries found in sheet';
+  }
+
+  // Update Legend Values
+  document.getElementById('legBasic').textContent = `₹${basic.toLocaleString('en-IN')}`;
+  document.getElementById('legHRA').textContent = `₹${hra.toLocaleString('en-IN')}`;
+  document.getElementById('legVDA').textContent = `₹${vda.toLocaleString('en-IN')}`;
+  document.getElementById('legUniform').textContent = `₹${uniform.toLocaleString('en-IN')}`;
+  document.getElementById('legOT').textContent = `₹${ot.toLocaleString('en-IN')}`;
+  document.getElementById('legEPF').textContent = `₹${epf.toLocaleString('en-IN')}`;
+  document.getElementById('legLate').textContent = `₹${late.toLocaleString('en-IN')}`;
+  document.getElementById('legPTax').textContent = `₹${ptax.toLocaleString('en-IN')}`;
+
+  document.getElementById('donutGrossVal').textContent = `₹${gross.toLocaleString('en-IN')}`;
+
+  // 8 segments passed to SVG renderer
+  const segments = [
+    { label: 'Basic', value: basic, color: '#0A84FF' },
+    { label: 'HRA', value: hra, color: '#BF5AF2' },
+    { label: 'VDA', value: vda, color: '#30D158' },
+    { label: 'Uniform Allowance', value: uniform, color: '#FF9F0A' },
+    { label: 'OT / Late Refund', value: ot, color: '#64D2FF' },
+    { label: 'EPF Deduction', value: epf, color: '#FFD60A' },
+    { label: 'Late Deduction', value: late, color: '#FF453A' },
+    { label: 'Professional Tax', value: ptax, color: '#AC8E68' }
+  ];
+
+  drawDonutChart(segments, segments.reduce((sum, s) => sum + s.value, 0));
+}
+
+/**
+ * 3) Adaptive Mathematical SVG Donut Renderer
+ */
+function drawDonutChart(segments, total) {
+  const svg = document.getElementById('donutSvg');
+  svg.innerHTML = '';
+  if (total <= 0) return;
+
+  const radius = 15.91549430918954; // Circumference = 100
+  let accumulatedPercent = 0;
+
+  segments.forEach(seg => {
+    const percent = (seg.value / total) * 100;
+    if (percent <= 0) return;
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    circle.setAttribute('cx', '50');
+    circle.setAttribute('cy', '50');
+    circle.setAttribute('r', radius.toString());
+    circle.setAttribute('fill', 'transparent');
+    circle.setAttribute('stroke', seg.color);
+    circle.setAttribute('stroke-width', '7.5');
+    circle.setAttribute('stroke-dasharray', `${percent} ${100 - percent}`);
+    circle.setAttribute('stroke-dashoffset', `${-accumulatedPercent}`);
+    
+    // Accessibility / Tooltip title on SVG hover
+    const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    title.textContent = `${seg.label}: ₹${seg.value.toLocaleString('en-IN')} (${percent.toFixed(1)}%)`;
+    circle.appendChild(title);
+
+    svg.appendChild(circle);
+    accumulatedPercent += percent;
   });
 }
 
