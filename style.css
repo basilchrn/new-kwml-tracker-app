@@ -69,6 +69,16 @@ body {
   font-size: 22px;
 }
 
+/* Brand Logo Image */
+.brand-logo-img {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  object-fit: contain;
+  display: block;
+}
+
+
 .brand-text h1 {
   font-size: 17px;
   font-weight: 600;
@@ -826,13 +836,4 @@ body {
 @keyframes spinSync {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
-}
-
-/* Brand Logo Image */
-.brand-logo-img {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  object-fit: contain;
-  display: block;
 }
