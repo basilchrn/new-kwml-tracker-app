@@ -3,7 +3,7 @@
  */
 
 // Paste your deployed Google Apps Script Web App Exec URL here
-const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbz_YOUR_DEPLOYED_WEBAPP_ID/exec';
+const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbzw0hKiPqW0AoymO1bI4P-fXILLxLc1dgnIapNcP2Vcq8f6M5bDoXSoEcpMjr6BEX5VNw/exec';
 
 const CACHE_KEY = 'KWML_CLIENT_STORE_V1';
 
