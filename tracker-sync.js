@@ -533,11 +533,41 @@ function renderTab1Summary() {
 /**
  * Tab 2: C-Off Expiry Ledger & Gazetted Holidays
  */
+/**
+ * Tab 2: C-Off Expiry Hub & Policy Hero
+ */
 function renderTab2COff() {
   const container = document.getElementById('coffCardList');
   container.innerHTML = '';
   const coffs = appState.data.coffs || [];
 
+  // 1) Evaluate Critical Expirations (<= 15 days, not availed)
+  const criticalCoffs = coffs.filter(c => {
+    const isAvailed = String(c.status).toLowerCase() === 'availed';
+    return !isAvailed && c.daysRemaining <= 15 && c.daysRemaining >= 0;
+  });
+
+  const heroBadge = document.getElementById('coffHeroStatusBadge');
+  const warningContainer = document.getElementById('coffHeroWarningContainer');
+  const warningText = document.getElementById('coffHeroWarningText');
+
+  if (criticalCoffs.length > 0) {
+    heroBadge.className = 'badge-status critical';
+    heroBadge.textContent = `${criticalCoffs.length} Expiring Soon`;
+
+    const summaryItems = criticalCoffs
+      .map(c => `<b>${c.holiday || 'Gazetted Duty'}</b> (Duty: ${c.dutyDate}, <strong>${c.daysRemaining}d left</strong>)`)
+      .join('<br>');
+
+    warningText.innerHTML = `<strong>Attention Required:</strong> You have ${criticalCoffs.length} C-Off credit(s) nearing expiration:<br>${summaryItems}<br>Avail immediately or request a +30-day HR Extension before the expiry date.`;
+    warningContainer.classList.remove('hidden');
+  } else {
+    heroBadge.className = 'badge-status safe';
+    heroBadge.textContent = 'Credits Safe';
+    warningContainer.classList.add('hidden');
+  }
+
+  // 2) Render Ledger Cards
   if (coffs.length === 0) {
     container.innerHTML = '<p class="placeholder-text">No Compensatory Offs recorded in sheet.</p>';
   }
@@ -573,6 +603,7 @@ function renderTab2COff() {
     container.appendChild(card);
   });
 
+  // 3) Render Gazetted Holidays
   const holList = document.getElementById('holidayList');
   holList.innerHTML = '';
   const holidays = appState.data.holidays || [];
