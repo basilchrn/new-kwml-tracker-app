@@ -4,7 +4,7 @@
  */
 
 // Replace this URL with your deployed Google Apps Script Web App exec URL
-const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbz_YOUR_DEPLOYED_WEBAPP_ID/exec';
+const SCRIPT_API_URL = 'https://script.google.com/macros/s/AKfycbzw0hKiPqW0AoymO1bI4P-fXILLxLc1dgnIapNcP2Vcq8f6M5bDoXSoEcpMjr6BEX5VNw/exec';
 
 // Terminal Location Dictionary for direct Google Maps Navigation
 const TERMINAL_LOCATIONS = {
