@@ -618,22 +618,62 @@ function evaluateOperationalAlerts() {
     }
   }
 
-  // 3. Continuos working day streak alert
-  let streak = 0;
-  shifts.forEach(s => {
+// 3. Duty Streaks (Single Latest Alert Only + Upcoming Shift Highlight)
+  const todayDate = new Date();
+  todayDate.setHours(0, 0, 0, 0);
+
+  // Group continuous working shifts into distinct streak sequences
+  const dutyStreaks = [];
+  let currentStreak = [];
+
+  // Sort shifts chronologically just in case the sheet order varies
+  const sortedShifts = [...shifts].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  sortedShifts.forEach(s => {
     if (['A', 'B', 'G'].includes(s.shiftCode)) {
-      streak++;
-      if (streak > 6) {
-        alerts.push({
-          type: 'warning',
-          title: `Duty Streak (${streak} Days)`,
-          desc: `Working ${streak} consecutive duties without a rostered rest day (WO).`
-        });
-      }
+      currentStreak.push(s);
     } else {
-      streak = 0;
+      if (currentStreak.length > 6) {
+        dutyStreaks.push([...currentStreak]);
+      }
+      currentStreak = [];
     }
   });
+
+  // 3. Capture trailing streak if it concludes at the end of the roster
+  if (currentStreak.length > 6) {
+    dutyStreaks.push([...currentStreak]);
+  }
+
+  // Only take the latest streak (max 1 alert)
+  if (dutyStreaks.length > 0) {
+    const latestStreak = dutyStreaks[dutyStreaks.length - 1];
+    const streakLength = latestStreak.length;
+    const startDate = latestStreak[0].date;
+    const endDate = latestStreak[latestStreak.length - 1].date;
+
+    // Determine if the streak touches or extends into upcoming rostered dates
+    const hasUpcomingDuties = latestStreak.some(s => {
+      const d = new Date(s.date);
+      d.setHours(0, 0, 0, 0);
+      const isCompleted = String(s.status || '').toLowerCase().includes('completed');
+      return d >= todayDate && !isCompleted;
+    });
+
+    if (hasUpcomingDuties) {
+      alerts.push({
+        type: 'critical', // Highlighted as critical due to upcoming fatigue
+        title: `⚡ Upcoming Duty Streak (${streakLength} Shifts)`,
+        desc: `High fatigue risk: Active duty streak of ${streakLength} consecutive shifts spanning ${startDate} to ${endDate} without a rostered rest day (WO). Plan fatigue management accordingly.`
+      });
+    } else {
+      alerts.push({
+        type: 'warning',
+        title: `Latest Completed Duty Streak (${streakLength} Shifts)`,
+        desc: `Logged ${streakLength} consecutive duties from ${startDate} to ${endDate} without an intervening rest day (WO).`
+      });
+    }
+  }
 
   const badge = document.getElementById('alertCountBadge');
   const alertList = document.getElementById('alertList');
